@@ -1,0 +1,265 @@
+# RamSim - RAM Management Simulation Environment
+
+[![Tests](https://github.com/yourusername/ramsim/workflows/Tests/badge.svg)](https://github.com/yourusername/ramsim/actions)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A professional Gymnasium-based Reinforcement Learning environment that simulates RAM management in an operating system, enabling agents to learn resource management strategies.
+
+## ✨ Features
+
+- **5 System Metrics**: RAM usage, CPU usage, page faults, swap space usage, power consumption
+- **8 Process Actions**: Kill, Swap Out/In, Suspend/Resume, Renice (increase/decrease priority), NoOp
+- **Dynamic Process Profiles**: Heavy, Leaky, Active, Idle process types
+- **Realistic Reward System**: Balances stability, power consumption, QoS, and thrashing metrics
+- **Process Dynamics**: Memory leaks grow over time, CPU usage fluctuates, random process terminations
+- **Process Spawning**: New processes spawn to replace killed ones, maintaining system realism
+- **Multiple Visualization Styles**: Cyberpunk (neon theme), Retro (terminal), Anime (kawaii pastel)
+- **Dynamic Window Sizing**: Automatically adjusts window dimensions based on renderer style
+- **Professional Package Structure**: Modular design with comprehensive tests and documentation
+- **CI/CD Ready**: GitHub Actions workflows for automated testing
+
+## 📦 Installation
+
+### From Source
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/ramsim.git
+cd ramsim
+
+# Install in development mode
+pip install -e .
+```
+
+### Quick Install
+
+```bash
+# Install dependencies only
+pip install -r requirements.txt
+```
+
+For detailed installation instructions, see [Installation Guide](docs/installation.md).
+
+## 🚀 Quick Start
+
+### Basic Usage (Headless)
+```python
+from ramsim import RamSimEnv
+
+# Create an environment with 5 processes
+env = RamSimEnv(k=5)
+
+# Reset the environment
+obs, info = env.reset()
+
+# Take a random action and apply it
+action = env.action_space.sample()
+obs, reward, terminated, truncated, info = env.step(action)
+
+# Access detailed system metrics from info dict
+print(f"RAM Usage: {info['ram_usage']:.2%}")
+print(f"CPU Usage: {info['cpu_usage']:.2%}")
+print(f"Page Faults: {info['page_faults']:.3f}")
+print(f"Swap Usage: {info['swap_usage']:.2%}")
+print(f"Power: {info['power']:.2%}")
+```
+
+### Visualization
+
+#### Cyberpunk Style (Default)
+```python
+from RamSim import RamSimEnv
+rams
+# Enable visualization with cyberpunk theme
+env = RamSimEnv(k=5, render_mode='human', renderer_style='cyberpunk')
+obs, _ = env.reset()
+
+for step in range(100):
+    action = env.action_space.sample()
+    obs, reward, terminated, truncated, info = env.step(action)
+    
+    # Render neon dashboard with glowing effects
+    env.render()
+    
+    if terminated:
+        obs, _ = env.reset()
+
+env.close()
+```
+
+#### Retro Terminal Style
+```python
+# Classic terminal aesthetic with ASCII art and monospace fonts
+env = RamSimEnv(k=5, render_mode='human', renderer_style='retro')
+```
+
+#### Hyprland Anime Rice Style
+```python
+# Kawaii anime aesthetic with pastel colors (Catppuccin palette)
+env = RamSimEnv(k=5, render_mode='human', renderer_style='anime')
+# or
+env = RamSimEnv(k=5, render_mode='human', renderer_style='hyprland')
+```
+
+### Renderer Styles
+
+| Style | Theme | Features |
+|-------|-------|----------|
+| `cyberpunk` | Dark neon | Grid background, glowing effects, scanlines, pulsing state badges |
+| `retro` | Terminal | Green on black, ASCII box drawing, monospace fonts, blinking cursor |
+| `anime` / `hyprland` | Pastel kawaii | Rounded cards, Catppuccin colors, floating particles, cute text (uwu) |
+
+### Custom Window Size
+```python
+# Override auto-sizing with custom dimensions
+env = RamSimEnv(k=10, render_mode='human', renderer_style='cyberpunk', window_size=(1600, 800))
+```
+
+## Observation Space
+
+```python
+{
+    "system_stats": Box(shape=(5,)),  # [RAM, CPU, PageFaults, Swap, Power]
+    "process_table": Box(shape=(k, 4))  # [RAM, CPU, Priority, State] for each process
+}
+```
+
+### Process States
+- `1.0` - Running
+- `0.6` - Suspended
+- `0.3` - Swapped
+- `0.0` - Killed
+
+## Action Space
+
+8 possible actions for each process:
+
+| Action | Description |
+|--------|-------------|
+| 0 | **Kill** - Terminate the process |
+| 1 | **Swap Out** - Move from RAM to disk |
+| 2 | **Swap In** - Bring back from disk to RAM |
+| 3 | **Suspend** - Pause the process (CPU=0, RAM halved) |
+| 4 | **Resume** - Resume suspended process |
+| 5 | **Renice Increase** - Increase priority |
+| 6 | **Renice Decrease** - Decrease priority |
+| 7 | **NoOp** - Do nothing |
+
+## Reward Mechanism
+
+### Local Rewards (Action-Based)
+- **Kill**: +20 for memory leak processes, -10 for critical processes
+- **Swap Out**: +10 bonus under high memory pressure
+- **Suspend**: +5 for high RAM processes
+- **Resume/Swap In**: Priority * 5, but -10 if OOM risk exists
+
+### Global Reward
+```
+Total Reward = 0.4*r_stability + 0.2*r_power + 0.3*r_qos + 0.1*r_trashing
+```
+
+- **r_stability**: -10 if RAM ≥ 90%, else +1
+- **r_power**: (1 - power) * 2
+- **r_qos**: Sum of running high-priority processes
+- **r_trashing**: -(swap + page_faults) * 5
+
+## Episode Termination
+
+The environment terminates when RAM usage reaches 100% (`terminated=True`).
+
+## Process Dynamics
+
+The environment simulates realistic process behavior:
+
+### Natural Evolution
+- **CPU Fluctuations**: Running processes experience ±5% CPU usage variations
+- **RAM Fluctuations**: Normal processes have ±2% RAM variations
+- **Memory Leaks**: Processes with high RAM (>60%) and low CPU (<10%) grow by 1-6% per step
+- **Random Termination**: 2% chance per step for any running process to terminate naturally
+
+### Process Spawning
+When processes are killed or terminated, new processes can spawn (5% chance per killed slot per step):
+- **Idle** (50%): Low resource footprint for background tasks
+- **Active** (30%): Moderate resource usage for user applications
+- **Heavy** (15%): High CPU and RAM for compute-intensive tasks
+- **Leaky** (5%): Anomalous memory growth patterns (agent training targets)
+
+## Info Dictionary
+
+The `step()` method returns an info dictionary with detailed metrics:
+```python
+{
+    "step": int,              # Current step number
+    "ram_usage": float,       # Current RAM utilization (0-1)
+    "cpu_usage": float,       # Current CPU utilization (0-1)
+    "page_faults": float,     # Page fault rate (0-1)
+    "swap_usage": float,      # Swap space usage (0-1)
+    "power": float            # Power consumption (0-1, normalized to 200W max)
+}
+```
+
+## 📚 Documentation
+
+- [Installation Guide](docs/installation.md)
+- [Tutorial](docs/tutorial.md)
+- [API Reference](docs/api.md)
+
+## 📁 Project Structure
+
+```
+RamSim/
+├── src/ramsim/              # Main source code
+│   ├── environment.py       # RamSimEnv class
+│   ├── renderers/          # Visualization renderers
+│   │   ├── base.py         # BaseRenderer
+│   │   ├── cyberpunk.py    # Cyberpunk style
+│   │   ├── retro.py        # Retro terminal style
+│   │   └── anime.py        # Anime kawaii style
+│   └── utils/              # Utilities and constants
+├── tests/                   # Comprehensive test suite
+├── examples/               # Usage examples
+├── docs/                   # Documentation
+└── .github/workflows/      # CI/CD pipelines
+```
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=ramsim --cov-report=term-missing
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🌟 Citation
+
+If you use RamSim in your research, please cite:
+
+```bibtex
+@software{ramsim2026,
+  title = {RamSim: A Gymnasium Environment for RAM Management},
+  author = {RamSim Contributors},
+  year = {2026},
+  url = {https://github.com/yourusername/ramsim}
+}
+```
+
+## 📧 Contact
+
+- Issues: [GitHub Issues](https://github.com/yourusername/ramsim/issues)
+- Discussions: [GitHub Discussions](https://github.com/yourusername/ramsim/discussions)
