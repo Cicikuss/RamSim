@@ -261,5 +261,5 @@ If you use RamSim in your research, please cite:
 
 ## 📧 Contact
 
-- Issues: [GitHub Issues](https://github.com/yourusername/ramsim/issues)
-- Discussions: [GitHub Discussions](https://github.com/yourusername/ramsim/discussions)
+- Issues: [GitHub Issues](https://github.com/Cicikuss/ramsim/issues)
+- Discussions: [GitHub Discussions](https://github.com/Cicikuss/ramsim/discussions)
