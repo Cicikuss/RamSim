@@ -1,6 +1,6 @@
 # RamSim - RAM Management Simulation Environment
 
-[![Tests](https://github.com/yourusername/ramsim/workflows/Tests/badge.svg)](https://github.com/yourusername/ramsim/actions)
+[![Tests](https://github.com/Cicikuss/ramsim/workflows/Tests/badge.svg)](https://github.com/Cicikuss/ramsim/actions)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -25,7 +25,7 @@ A professional Gymnasium-based Reinforcement Learning environment that simulates
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ramsim.git
+git clone https://github.com/Cicikuss/ramsim.git
 cd ramsim
 
 # Install in development mode
@@ -255,7 +255,7 @@ If you use RamSim in your research, please cite:
   title = {RamSim: A Gymnasium Environment for RAM Management},
   author = {RamSim Contributors},
   year = {2026},
-  url = {https://github.com/yourusername/ramsim}
+  url = {https://github.com/Cicikuss/ramsim}
 }
 ```
 
